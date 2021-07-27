@@ -14,4 +14,4 @@ There is always a market for a new algorithm.
 This algorithm does not try and achieve these bold ideas but serves as a point of reference that can be analysed and made better as time goes on.
 
 
-There exist identical versions, one written in python and another much faster version written in C++.
+There exist identical versions, one written in python, another much faster version written in C++, a C language version, and a C# version.
