@@ -4,25 +4,26 @@
 
 int main()
 {
-	char* h;
+	// Allocate all the needed memory here once before it is used.
+	char* hash = (char*)malloc(sizeof(char) * 43);
+	char* padded = (char*)malloc(sizeof(char) * (9));
 
 	printf("%s\n", "gcrypt version 0.1");
 
-	h = gcrypt_ghash("The quick brown fox jumps over the lazy dog");
-	printf("%s\n", h);
-	free(h);
+	gcrypt_ghash("The quick brown fox jumps over the lazy dog", &hash, &padded);
+	printf("%s\n", hash);
 
-	h = gcrypt_ghash("The quick brown fox jumps over the lazy dog.");
-	printf("%s\n", h);
-	free(h);
+	gcrypt_ghash("The quick brown fox jumps over the lazy dog.", &hash, &padded);
+	printf("%s\n", hash);
 
-	h = gcrypt_ghash("the quick brown fox jumps over the lazy dog");
-	printf("%s\n", h);
-	free(h);
+	gcrypt_ghash("the quick brown fox jumps over the lazy dog", &hash, &padded);
+	printf("%s\n", hash);
 
-	h = gcrypt_ghash("");
-	printf("%s\n", h);
-	free(h);
+	gcrypt_ghash("", &hash, &padded);
+	printf("%s\n", hash);
+
+	free(hash);
+	free(padded);
 
 	return 0;
 }

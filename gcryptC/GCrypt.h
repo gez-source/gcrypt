@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
 
 #define FILE_BUFFER_SIZE 8000
 
@@ -42,14 +44,17 @@ void gcrypt_initilise_state()
 	e = 42463199; // More prime numbers.
 }
 
-char* gcrypt_int_to_hex(unsigned int integer)
+void gcrypt_int_to_hex(unsigned int integer, char** hexOutput)
 {
-	char* hex = malloc(sizeof(char) * (8 + 1));
-	hex[8] = '0';
+	//char* hex = malloc(sizeof(char) * (8 + 1));
 
-	sprintf(hex, "%x", integer);
+	// Hex value is 8 digits long for a uint.
+	char* h = *hexOutput;
+	h[8] = '0';
 
-	return hex;
+	sprintf(h, "%x", integer);
+
+	*hexOutput = h;
 }
 
 // see: https://stackoverflow.com/questions/43354488/c-formatted-string-how-to-add-leading-zeros-to-string-value-using-sprintf
@@ -63,47 +68,42 @@ void gcrypt_prepend_zeros(char* dest, const char* src, unsigned minimal_width, c
 }
 // end of code import.
 
-char* gcrypt_state_to_hash()
+void gcrypt_state_to_hash(char** outputHash, char** padding)
 {
-	//char hex_string[41];
-	char* hex_string = (char*)malloc(sizeof(char) * (40+1));
-	hex_string[40] = '0';
-	memset(hex_string, 0, 40);
+	char* hex_string = *outputHash;
+	
+	memset(hex_string, 0, 43);
+	hex_string[42] = '0';
 
-	char* h;
+	char* padded = *padding;
+	
+	memset(padded, '0', 9);
 
-	h = gcrypt_int_to_hex(a);
-	strcat(hex_string, h);
-	free(h);
+	strcat(hex_string, "0x");
 
-	h = gcrypt_int_to_hex(b);
-	strcat(hex_string, h);
-	free(h);
+	gcrypt_int_to_hex(a, &padded);
+	gcrypt_prepend_zeros(padded, padded, 8, '0');
+	strcat(hex_string, padded);
 
-	h = gcrypt_int_to_hex(c);
-	strcat(hex_string, h);
-	free(h);
+	gcrypt_int_to_hex(b, &padded);
+	gcrypt_prepend_zeros(padded, padded, 8, '0');
+	strcat(hex_string, padded);
 
-	h = gcrypt_int_to_hex(d);
-	strcat(hex_string, h);
-	free(h);
+	gcrypt_int_to_hex(c, &padded);
+	gcrypt_prepend_zeros(padded, padded, 8, '0');
+	strcat(hex_string, padded);
 
-	h = gcrypt_int_to_hex(e);
-	strcat(hex_string, h);
-	free(h);
+	gcrypt_int_to_hex(d, &padded);
+	gcrypt_prepend_zeros(padded, padded, 8, '0');
+	strcat(hex_string, padded);
 
-	//char padded_hex_string[40];
-	char* padded_hex_string = (char*)malloc(sizeof(char) * 40);
-	gcrypt_prepend_zeros(padded_hex_string, hex_string, 40, '0');
+	gcrypt_int_to_hex(e, &padded);
+	gcrypt_prepend_zeros(padded, padded, 8, '0');
+	strcat(hex_string, padded);
 
-	//char temp[43];
-	char* temp = (char*)malloc(sizeof(char) * 43);
-	temp[42] = '0';
+	*padding = padded;
 
-	strcpy(temp, "0x");
-	strcat(temp, padded_hex_string);
-
-	return temp;
+	*outputHash = hex_string;
 }
 
 //  see: https://stackoverflow.com/questions/35167/is-there-a-way-to-perform-a-circular-bit-shift-in-c
@@ -187,27 +187,27 @@ void gcrypt_process_byte_to_hash(unsigned char byteInput)
 /// <summary>
 /// Hash the specified input string and return the resultant hash as a string.
 /// </summary>
-char* gcrypt_ghash(char* inputString)
+void gcrypt_ghash(char* inputString, char** outputHash, char** padded)
 {
 	gcrypt_initilise_state();
 	gcrypt_execute_round();
 
 	for (int i = 0; i < strlen(inputString); i++)
 	{
-		char c = inputString[i];
+		uint8_t c = inputString[i];
 
 		gcrypt_process_byte_to_hash(c);
 	}
 
-	return gcrypt_state_to_hash();
+	gcrypt_state_to_hash(outputHash, padded);
 }
 
-char* gcrypt_ghash_file(char* fileName)
+void gcrypt_ghash_file(char* fileName, char** outputHash, char** padded)
 {
 	gcrypt_initilise_state();
 	gcrypt_execute_round();
 
-	unsigned char buffer[FILE_BUFFER_SIZE] = { 0 };
+	uint8_t buffer[FILE_BUFFER_SIZE] = { 0 };
 	int bytesRead = 0;
 	int i;
 	int bufferSize = sizeof(buffer);
@@ -238,7 +238,7 @@ char* gcrypt_ghash_file(char* fileName)
 		fclose(fp);
 	}
 
-	return gcrypt_state_to_hash();
+	gcrypt_state_to_hash(outputHash, padded);
 }
 
 #endif
