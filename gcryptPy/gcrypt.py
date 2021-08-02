@@ -2,8 +2,8 @@
 # Program Name: gcrypt hashing algorithm
 # Python version: 3.9.5
 
-import time
-import ctypes
+import time     # for timing of computation.
+import ctypes   # for uint32.
 
 class GCrypt:
     # Options for the character set to bruteforce:
@@ -107,18 +107,16 @@ class GCrypt:
         l_rotate = [5, 2, 1, 4, 7, 12]
         r_rotate = [14, 3, 5, 8, 11, 6]
 
-        for roundNum in range(0, self.security_rounds):
+        for roundNum in range(0, 40):
             if(roundNum % 4 == 0):
                 self.a = self.circular_right_shift(self.a, 13)
 
             if(roundNum % 3 == 0):
                 self.a = self.circular_left_shift(self.a, 7)
 
-            #self.a = self.circular_left_shift(self.a, 13)
-
             self.a = self.circular_left_shift(self.a, l_rotate[roundNum % 6])
             self.a = self.circular_right_shift(self.a, r_rotate[roundNum % 6])
-
+            
             self.a = self.xor(self.a, self.b)
             self.a = self.xor(self.a, self.c)
             self.a = self.xor(self.a, self.d)
@@ -148,6 +146,7 @@ class GCrypt:
     # Process and shred the specified byte into hash state.
     def process_byte_to_hash(self, byteInput):        
         # Combine current byteInput with state.
+        self.a = ctypes.c_uint32(self.xor(self.a, byteInput)).value
         self.a = ctypes.c_uint32(self.xor(self.a, byteInput) * self.prime).value
         self.b = ctypes.c_uint32(self.xor(self.b, byteInput) * self.prime2).value
         self.c = ctypes.c_uint32(self.xor(self.c, byteInput) * self.prime3).value
@@ -159,12 +158,13 @@ class GCrypt:
         
     def state_to_hash(self):
         # Formulate resultant hash using state information.
-        hex_string = self.int_to_hex(self.a) + self.int_to_hex(self.b) + \
-                     self.int_to_hex(self.c) + self.int_to_hex(self.d) + \
-                     self.int_to_hex(self.e)
+        # Ensure each 32bit value is exactly 8 characters long (use padding if required.)
+        hex_string = self.int_to_hex(self.a).zfill(8) + self.int_to_hex(self.b).zfill(8) + \
+                     self.int_to_hex(self.c).zfill(8) + self.int_to_hex(self.d).zfill(8) + \
+                     self.int_to_hex(self.e).zfill(8)
 
         # Ensure output is fitted to 32 characters with a padding of zeros.
-        hex_string = hex_string.zfill(40) 
+        #hex_string = hex_string.zfill(40) 
         
         return self.hex_prefix + hex_string
 
@@ -192,7 +192,7 @@ class GCrypt:
     # Hash the specified file and return the resultant hash as a string.
     def ghash_file(self, filePath):
         self.initilise_state()
-        self.execute_round()
+        #self.execute_round()
         
         self.startTimer()
         if self.trace_enabled:
@@ -249,10 +249,11 @@ g = GCrypt()
 print(g.ghash("The quick brown fox jumps over the lazy dog"))  # should be: 
 print(g.ghash("The quick brown fox jumps over the lazy dog.")) # should be: 
 print(g.ghash("the quick brown fox jumps over the lazy dog")) # should be:  
-print(g.ghash("")) # should be: 
+print(g.ghash("")) # should be:
 
 #g.bruteforce_simple() # Run a test bruteforce of the hashing algorithm.
 #g.find_collisions()
 
 #print(g.ghash_file("test.txt"))
+
 print("done.")
