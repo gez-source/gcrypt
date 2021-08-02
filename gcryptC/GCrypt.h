@@ -24,6 +24,11 @@ unsigned int prime3 = 0;
 unsigned int prime4 = 0;
 unsigned int prime5 = 0;
 
+//  see: https://stackoverflow.com/questions/35167/is-there-a-way-to-perform-a-circular-bit-shift-in-c
+#define GCRYPT_CIRCULAR_LEFT_SHIFT(value,n) (value << n) | (value >> (32 - n))
+#define GCRYPT_CIRCULAR_RIGHT_SHIFT(value,n) (value >> n) | (value << (32 - n))
+// End of code import.
+
 /// <summary>
 /// Initilises the state of the hash function.
 /// </summary>
@@ -94,17 +99,6 @@ void gcrypt_state_to_hash(unsigned char outputHash[43])
 	strcat(outputHash, padding);
 }
 
-//  see: https://stackoverflow.com/questions/35167/is-there-a-way-to-perform-a-circular-bit-shift-in-c
-unsigned int gcrypt_circular_left_shift(unsigned int value, unsigned int n)
-{
-	return (value << n) | (value >> (32 - n));
-}
-unsigned int gcrypt_circular_right_shift(unsigned int value, unsigned int n)
-{
-	return (value >> n) | (value << (32 - n));
-}
-// end of code import
-
 /// <summary>
 /// Performs a round over the state of the hash function.
 /// </summary>
@@ -117,15 +111,15 @@ void gcrypt_execute_round()
 	{
 		if (roundNum % 4 == 0)
 		{
-			a = gcrypt_circular_right_shift(a, 13);
+			a = GCRYPT_CIRCULAR_RIGHT_SHIFT(a, 13);
 		}
 		if (roundNum % 3 == 0)
 		{
-			a = gcrypt_circular_left_shift(a, 7);
+			a = GCRYPT_CIRCULAR_LEFT_SHIFT(a, 7);
 		}
 
-		a = gcrypt_circular_left_shift(a, l_rotate[roundNum % 6]);
-		a = gcrypt_circular_right_shift(a, r_rotate[roundNum % 6]);
+		a = GCRYPT_CIRCULAR_LEFT_SHIFT(a, l_rotate[roundNum % 6]);
+		a = GCRYPT_CIRCULAR_RIGHT_SHIFT(a, r_rotate[roundNum % 6]);
 
 		a = (a ^ b);
 		a = (a ^ c);
