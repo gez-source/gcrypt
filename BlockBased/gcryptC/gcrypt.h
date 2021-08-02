@@ -9,7 +9,7 @@
 #define GCRYPT_CIRCULAR_LEFT_SHIFT(value,n) (value << n) | (value >> (32 - n))
 #define GCRYPT_CIRCULAR_RIGHT_SHIFT(value,n) (value >> n) | (value << (32 - n))
 
-#define GCRYPT_ROUNDS 40
+#define GCRYPT_ROUNDS 5
 
 #define GCRYPT_PRIME0 53893699
 #define GCRYPT_PRIME1 29602757
@@ -49,7 +49,7 @@ void gcrypt_int_to_hex(unsigned int integer, unsigned char hexOutput[8])
 	// Hex value is 8 digits long for a uint.
 	hexOutput[8] = '0';
 
-	sprintf(hexOutput, "%x", integer);
+	sprintf(hexOutput, "%08x", integer);
 }
 
 // see: https://stackoverflow.com/questions/43354488/c-formatted-string-how-to-add-leading-zeros-to-string-value-using-sprintf
@@ -74,23 +74,18 @@ void gcrypt_state_to_hash(GCRYPT_CONTEXT_T* context, unsigned char outputHash[43
 	outputHash[1] = 'x';
 
 	gcrypt_int_to_hex(context->state[0], padding);
-	gcrypt_prepend_zeros(padding, padding, 8, '0');
 	strcat(outputHash, padding);
 
 	gcrypt_int_to_hex(context->state[1], padding);
-	gcrypt_prepend_zeros(padding, padding, 8, '0');
 	strcat(outputHash, padding);
 
 	gcrypt_int_to_hex(context->state[2], padding);
-	gcrypt_prepend_zeros(padding, padding, 8, '0');
 	strcat(outputHash, padding);
 
 	gcrypt_int_to_hex(context->state[3], padding);
-	gcrypt_prepend_zeros(padding, padding, 8, '0');
 	strcat(outputHash, padding);
 
 	gcrypt_int_to_hex(context->state[4], padding);
-	gcrypt_prepend_zeros(padding, padding, 8, '0');
 	strcat(outputHash, padding);
 }
 
@@ -115,7 +110,7 @@ void GCRYPT_Transform(uint32_t state[5], const unsigned char buffer[64])
 	d = state[3];
 	e = state[4];
 
-	for (blockIndex = 0; blockIndex < 16; blockIndex++)
+	for (blockIndex = 0; blockIndex < 14; blockIndex++)
 	{
 		blockInput = block[0].blockInput[blockIndex];
 
@@ -188,11 +183,11 @@ void GCRYPT_Transform(uint32_t state[5], const unsigned char buffer[64])
 
 void GCRYPT_Init(GCRYPT_CONTEXT_T* context)
 {
-	context->state[0] = 19342607;
-	context->state[1] = 84843461;
-	context->state[2] = 18026741;
-	context->state[3] = 36106927;
-	context->state[4] = 42463199;
+	context->state[0] = 19342607; // 127250F
+	context->state[1] = 84843461; // 50E9BC5
+	context->state[2] = 18026741; // 11310F5
+	context->state[3] = 36106927; // 226F2AF
+	context->state[4] = 42463199; // 287EFDF
 	context->count[0] = 0;
 	context->count[1] = 0;
 }
