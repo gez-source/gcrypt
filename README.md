@@ -1,6 +1,6 @@
 # gcrypt
 
-Gcrypt cryptographic hash function.
+Gcrypt cryptographic (not) hash function.
 
 There is a need in both the legal and forensics spaces for a program that can verify the integrity of files quicker than other products on the market. 
 People in forensics need to be able to preserve the chain of custody for investigations, 
