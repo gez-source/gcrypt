@@ -140,7 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="EntryPoint.c" />
+    <ClCompile Include="EntryPoint.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gcrypt.h" />

@@ -9,7 +9,7 @@
 #define GCRYPT_CIRCULAR_LEFT_SHIFT(value,n) (value << n) | (value >> (32 - n))
 #define GCRYPT_CIRCULAR_RIGHT_SHIFT(value,n) (value >> n) | (value << (32 - n))
 
-#define GCRYPT_ROUNDS 5
+#define GCRYPT_ROUNDS 40
 
 #define GCRYPT_PRIME0 53893699
 #define GCRYPT_PRIME1 29602757
@@ -33,9 +33,9 @@ typedef union {
 static const int gcrypt_l_rotate[] = { 5, 2, 1, 4, 7, 12 };
 static const int gcrypt_r_rotate[] = { 14, 3, 5, 8, 11, 6 };
 
-void gcrypt_int_to_hex(unsigned int integer, unsigned char hexOutput[8]);
+void gcrypt_int_to_hex(unsigned int integer, char hexOutput[8]);
 void gcrypt_prepend_zeros(char* dest, const char* src, unsigned minimalWidth, char paddingChar);
-void gcrypt_state_to_hash(GCRYPT_CONTEXT_T* context, unsigned char outputHash[43]);
+void gcrypt_state_to_hash(GCRYPT_CONTEXT_T* context, char outputHash[43]);
 
 void GCRYPT_Transform(uint32_t state[5], const unsigned char buffer[64]);
 void GCRYPT_Init(GCRYPT_CONTEXT_T* context);
@@ -44,7 +44,7 @@ void GCRYPT_Final(unsigned char digest[43], GCRYPT_CONTEXT_T* context);
 void GCRYPT(const unsigned char* data, unsigned long length, unsigned char digest[43]);
 
 
-void gcrypt_int_to_hex(unsigned int integer, unsigned char hexOutput[8])
+void gcrypt_int_to_hex(unsigned int integer, char hexOutput[8])
 {
 	// Hex value is 8 digits long for a uint.
 	hexOutput[8] = '0';
@@ -63,9 +63,9 @@ void gcrypt_prepend_zeros(char* dest, const char* src, unsigned minimalWidth, ch
 }
 // end of code import.
 
-void gcrypt_state_to_hash(GCRYPT_CONTEXT_T* context, unsigned char outputHash[43])
+void gcrypt_state_to_hash(GCRYPT_CONTEXT_T* context, char outputHash[43])
 {
-	unsigned char padding[9];
+	char padding[9];
 
 	memset(outputHash, 0, 43);
 
@@ -110,7 +110,7 @@ void GCRYPT_Transform(uint32_t state[5], const unsigned char buffer[64])
 	d = state[3];
 	e = state[4];
 
-	for (blockIndex = 0; blockIndex < 14; blockIndex++)
+	for (blockIndex = 0; blockIndex < 2; blockIndex++)
 	{
 		blockInput = block[0].blockInput[blockIndex];
 
@@ -135,6 +135,12 @@ void GCRYPT_Transform(uint32_t state[5], const unsigned char buffer[64])
 
 			a = GCRYPT_CIRCULAR_LEFT_SHIFT(a, gcrypt_l_rotate[roundNum % 6]);
 			a = GCRYPT_CIRCULAR_RIGHT_SHIFT(a, gcrypt_r_rotate[roundNum % 6]);
+
+			b = GCRYPT_CIRCULAR_LEFT_SHIFT(b, 3 * gcrypt_l_rotate[roundNum % 6] + 1);
+			c = GCRYPT_CIRCULAR_LEFT_SHIFT(c, 8 * gcrypt_l_rotate[roundNum % 6] + 2);
+			
+			d = GCRYPT_CIRCULAR_RIGHT_SHIFT(d, 4 * gcrypt_r_rotate[roundNum % 6] + 7);
+			e = GCRYPT_CIRCULAR_RIGHT_SHIFT(e, 4);
 
 			a = (a ^ b);
 			a = (a ^ c);
@@ -219,7 +225,7 @@ void GCRYPT_Update(GCRYPT_CONTEXT_T* context, const unsigned char* data, uint32_
 	memcpy(&context->buffer[j], &data[i], len - i);
 }
 
-void GCRYPT_Final(unsigned char digest[43], GCRYPT_CONTEXT_T* context)
+void GCRYPT_Final(char digest[43], GCRYPT_CONTEXT_T* context)
 {
 	unsigned i;
 	unsigned char finalcount[8];
@@ -242,24 +248,26 @@ void GCRYPT_Final(unsigned char digest[43], GCRYPT_CONTEXT_T* context)
 	gcrypt_state_to_hash(context, digest);
 
 	// Clear hash state information.
-	memset(context, 0, sizeof(GCRYPT_CONTEXT_T));
-	memset(&finalcount, 0, sizeof(finalcount));
+	//memset(context, 0, sizeof(GCRYPT_CONTEXT_T));
+	//memset(&finalcount, 0, sizeof(finalcount));
 }
 
-void GCRYPT(const unsigned char* data, unsigned long length, unsigned char digest[43])
+void GCRYPT(const char* data, long length, char digest[43])
 {
 	GCRYPT_CONTEXT_T ctx;
 	//unsigned int ii;
 
+	const unsigned char* dataBytes = (const unsigned char*)data;
+
 	GCRYPT_Init(&ctx);
 
 	// Can update all at once.
-	GCRYPT_Update(&ctx, data, length);
+	GCRYPT_Update(&ctx, dataBytes, length);
 
 	// Can update byte at a time.
 	//for (ii = 0; ii < length; ii += 1)
 	//{
-	//    GCRYPT_Update(&ctx, (const unsigned char*)data + ii, 1);
+	//    GCRYPT_Update(&ctx, (const unsigned char*)dataBytes + ii, 1);
 	//}
 
 	GCRYPT_Final(digest, &ctx);
