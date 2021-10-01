@@ -1,2 +1,0 @@
-C:\dev\gcrypt\BlockBased\gcryptC\x64\Debug\gcrypt_block_based.exe
-C:\dev\gcrypt\BlockBased\gcryptC\x64\Debug\gcrypt_block_based.pdb
